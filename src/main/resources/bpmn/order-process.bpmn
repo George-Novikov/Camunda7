@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_0"
+    targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn:process id="order-process" name="Order Process" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="start-event" name="Order Received">
+      <bpmn:outgoing>flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:serviceTask id="validate-order" name="Validate Order" camunda:delegateExpression="${orderDelegate}">
+      <bpmn:incoming>flow1</bpmn:incoming>
+      <bpmn:outgoing>flow2</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="amount-check" name="Check Amount">
+      <bpmn:incoming>flow2</bpmn:incoming>
+      <bpmn:outgoing>flow3-high</bpmn:outgoing>
+      <bpmn:outgoing>flow3-low</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="manager-approval" name="Review High Value Order" camunda:candidateGroups="managers">
+      <bpmn:incoming>flow3-high</bpmn:incoming>
+      <bpmn:outgoing>flow4</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="process-payment" name="Process Payment" camunda:delegateExpression="${paymentDelegate}">
+      <bpmn:incoming>flow3-low</bpmn:incoming>
+      <bpmn:incoming>flow4</bpmn:incoming>
+      <bpmn:outgoing>flow5</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="prepare-shipping" name="Prepare Shipping" camunda:delegateExpression="${shippingDelegate}">
+      <bpmn:incoming>flow5</bpmn:incoming>
+      <bpmn:outgoing>flow6</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="end-event" name="Order Completed">
+      <bpmn:incoming>flow6</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="flow1" sourceRef="start-event" targetRef="validate-order" />
+    <bpmn:sequenceFlow id="flow2" sourceRef="validate-order" targetRef="amount-check" />
+    <bpmn:sequenceFlow id="flow3-high" name="Amount >= 1000" sourceRef="amount-check" targetRef="manager-approval">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount >= 1000}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow3-low" name="Amount &lt; 1000" sourceRef="amount-check" targetRef="process-payment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount &lt; 1000}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow4" sourceRef="manager-approval" targetRef="process-payment" />
+    <bpmn:sequenceFlow id="flow5" sourceRef="process-payment" targetRef="prepare-shipping" />
+    <bpmn:sequenceFlow id="flow6" sourceRef="prepare-shipping" targetRef="end-event" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="order-process">
+      <!-- Start Event -->
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start-event">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="134" y="145" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Validate Order -->
+      <bpmndi:BPMNShape id="Activity_1" bpmnElement="validate-order">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Amount Check Gateway -->
+      <bpmndi:BPMNShape id="Gateway_1" bpmnElement="amount-check" isMarkerVisible="true">
+        <dc:Bounds x="395" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="384" y="65" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Manager Approval -->
+      <bpmndi:BPMNShape id="Activity_2" bpmnElement="manager-approval">
+        <dc:Bounds x="500" y="180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Process Payment -->
+      <bpmndi:BPMNShape id="Activity_3" bpmnElement="process-payment">
+        <dc:Bounds x="660" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Prepare Shipping -->
+      <bpmndi:BPMNShape id="Activity_4" bpmnElement="prepare-shipping">
+        <dc:Bounds x="820" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- End Event -->
+      <bpmndi:BPMNShape id="Event_1" bpmnElement="end-event">
+        <dc:Bounds x="982" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="960" y="145" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flows -->
+      <bpmndi:BPMNEdge id="Flow_1" bpmnElement="flow1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_2" bpmnElement="flow2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="395" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_3" bpmnElement="flow3-high">
+        <di:waypoint x="420" y="145" />
+        <di:waypoint x="420" y="220" />
+        <di:waypoint x="500" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="405" y="233" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_4" bpmnElement="flow3-low">
+        <di:waypoint x="445" y="120" />
+        <di:waypoint x="660" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="513" y="102" width="79" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_5" bpmnElement="flow4">
+        <di:waypoint x="600" y="220" />
+        <di:waypoint x="630" y="220" />
+        <di:waypoint x="630" y="120" />
+        <di:waypoint x="660" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_6" bpmnElement="flow5">
+        <di:waypoint x="760" y="120" />
+        <di:waypoint x="820" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_7" bpmnElement="flow6">
+        <di:waypoint x="920" y="120" />
+        <di:waypoint x="982" y="120" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

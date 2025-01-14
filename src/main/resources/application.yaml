@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: camunda7
+
+  datasource:
+    url: jdbc:h2:mem:camunda
+    username: sa
+    password: password
+
+camunda:
+  bpm:
+    admin-user:
+      id: demo
+      password: demo
+      firstName: Demo
+      lastName: User
+    filter:
+      create: All Tasks
+    application:
+      delete-upon-undeploy: false
+      scan-for-process-definitions: true
+      deploy-changed-only: true
+    job-execution:
+      enabled: true
+    metrics:
+      enabled: true
+      db-reporter-activate: true
